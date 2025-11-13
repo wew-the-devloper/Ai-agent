@@ -1,0 +1,864 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abdou AI Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            position: relative;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .stat-badge {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .share-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .setup-screen {
+            padding: 40px 20px;
+            max-width: 500px;
+            margin: auto;
+            text-align: center;
+        }
+        
+        .setup-screen h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .setup-screen p {
+            color: #aaa;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .setup-input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .setup-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .setup-input::placeholder {
+            color: #666;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        .chat-container {
+            display: none;
+            flex-direction: column;
+            height: calc(100vh - 60px);
+        }
+        
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            display: flex;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message-content {
+            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.assistant .message-content {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message.system .message-content {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            max-width: 90%;
+            margin: 0 auto;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        /* BEAUTIFUL AD INTEGRATION */
+        .ad-container {
+            background: rgba(102, 126, 234, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(102, 126, 234, 0.15);
+            border-radius: 24px;
+            padding: 24px;
+            margin: 20px auto;
+            max-width: 90%;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInScale 0.5s ease-out;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.08);
+        }
+        
+        .ad-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(102, 126, 234, 0.5) 50%, 
+                transparent 100%);
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .ad-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ad-label::before {
+            content: "✨";
+            font-size: 12px;
+        }
+        
+        .ad-content {
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.08) 0%, 
+                rgba(118, 75, 162, 0.08) 100%);
+            border-radius: 16px;
+            padding: 24px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .ad-content:hover {
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.12) 0%, 
+                rgba(118, 75, 162, 0.12) 100%);
+            transform: translateY(-2px);
+        }
+        
+        .ad-placeholder {
+            text-align: center;
+            color: #888;
+        }
+        
+        .ad-placeholder h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+        
+        .ad-placeholder p {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .input-area {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-area input {
+            flex: 1;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .input-area input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .input-area input::placeholder {
+            color: #666;
+        }
+        
+        .send-btn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 3px;
+        }
+        
+        .premium-teaser {
+            background: linear-gradient(135deg, 
+                rgba(255, 215, 0, 0.1) 0%, 
+                rgba(255, 165, 0, 0.1) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+        }
+        
+        .premium-teaser h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .premium-teaser p {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .waitlist-btn {
+            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: #1a1a2e;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .waitlist-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Setup Screen -->
+        <div class="setup-screen" id="setupScreen">
+            <h2>🚀 Abdou AI Agent</h2>
+            <p>Your free intelligent assistant. Powered by Groq AI - blazing fast responses!</p>
+            <input 
+                type="password" 
+                class="setup-input" 
+                id="apiKeyInput" 
+                placeholder="Enter Groq API key (gsk_...)"
+            >
+            <button class="btn-primary" onclick="saveApiKey()">Start Free</button>
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+                Get your free API key at <strong>console.groq.com</strong>
+            </p>
+        </div>
+
+        <!-- Main App -->
+        <div class="chat-container" id="chatContainer">
+            <div class="header">
+                <div class="logo">
+                    <span>⚡</span>
+                    <span>Abdou AI Agent</span>
+                </div>
+                <div class="stats">
+                    <div class="stat-badge" id="userCount">
+                        📊 55/55 messages
+                    </div>
+                    <button class="share-btn" onclick="shareApp()">
+                        Share
+                    </button>
+                </div>
+            </div>
+
+            <div class="messages" id="messages"></div>
+
+            <div class="input-area">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Ask me anything..."
+                    onkeypress="if(event.key==='Enter') sendMessage()"
+                >
+                <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let apiKey = '';
+        let conversationHistory = [];
+        let messageCount = 0;
+        let totalUsers = 1247; // Simulated for social proof
+        const FREE_DAILY_LIMIT = 55; // Daily message limit for free users
+        let isPremium = false; // Premium users get unlimited
+        
+        // Tools - Keep it simple for free version
+        const tools = [
+            {
+                type: "function",
+                function: {
+                    name: "calculator",
+                    description: "Perform mathematical calculations",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            expression: {
+                                type: "string",
+                                description: "Math expression like '2 + 2' or '10 * 5'"
+                            }
+                        },
+                        required: ["expression"]
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: "get_time",
+                    description: "Get current date and time",
+                    parameters: {
+                        type: "object",
+                        properties: {}
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: "flip_coin",
+                    description: "Flip a coin - heads or tails",
+                    parameters: {
+                        type: "object",
+                        properties: {}
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: "roll_dice",
+                    description: "Roll a dice (1-6)",
+                    parameters: {
+                        type: "object",
+                        properties: {}
+                    }
+                }
+            }
+        ];
+        
+        // Execute tools
+        function executeTool(toolName, toolInput) {
+            switch(toolName) {
+                case 'calculator':
+                    try {
+                        const result = Function('"use strict"; return (' + toolInput.expression + ')')();
+                        return `Result: ${result}`;
+                    } catch (e) {
+                        return `Error: ${e.message}`;
+                    }
+                    
+                case 'get_time':
+                    return `Current time: ${new Date().toLocaleString()}`;
+                    
+                case 'flip_coin':
+                    return Math.random() < 0.5 ? '🪙 Heads!' : '🪙 Tails!';
+                    
+                case 'roll_dice':
+                    return `🎲 You rolled a ${Math.floor(Math.random() * 6) + 1}`;
+                    
+                default:
+                    return 'Unknown tool';
+            }
+        }
+        
+        // Save API key
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            apiKey = input.value.trim();
+            
+            if (!apiKey.startsWith('gsk_')) {
+                alert('Please enter a valid Groq API key (starts with gsk_)');
+                return;
+            }
+            
+            localStorage.setItem('groq_api_key', apiKey);
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('chatContainer').style.display = 'flex';
+            
+            loadUserData();
+            addMessage('system', '👋 Welcome! I\'m your free AI assistant powered by Groq. You have 55 free messages per day. Ask me anything!');
+            
+            // Show premium teaser after first message
+            setTimeout(() => {
+                showPremiumTeaser();
+            }, 5000);
+        }
+        
+        // Load user data
+        function loadUserData() {
+            const savedCount = localStorage.getItem('messageCount') || 0;
+            const savedDate = localStorage.getItem('lastMessageDate') || new Date().toDateString();
+            const today = new Date().toDateString();
+            
+            // Reset count if new day
+            if (savedDate !== today) {
+                messageCount = 0;
+                localStorage.setItem('lastMessageDate', today);
+                localStorage.setItem('messageCount', 0);
+            } else {
+                messageCount = parseInt(savedCount);
+            }
+            
+            // Check premium status
+            isPremium = localStorage.getItem('isPremium') === 'true';
+            
+            updateMessageLimit();
+        }
+        
+        // Update message limit display
+        function updateMessageLimit() {
+            const remaining = FREE_DAILY_LIMIT - messageCount;
+            const statBadge = document.getElementById('userCount');
+            
+            if (isPremium) {
+                statBadge.innerHTML = '💎 Premium - Unlimited';
+                statBadge.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.2) 100%)';
+                statBadge.style.borderColor = 'rgba(255, 215, 0, 0.4)';
+                statBadge.style.color = '#ffd700';
+            } else {
+                statBadge.innerHTML = `📊 ${remaining}/${FREE_DAILY_LIMIT} messages`;
+                
+                // Color coding based on remaining messages
+                if (remaining <= 10) {
+                    statBadge.style.background = 'rgba(255, 82, 82, 0.2)';
+                    statBadge.style.borderColor = 'rgba(255, 82, 82, 0.4)';
+                    statBadge.style.color = '#ff5252';
+                } else if (remaining <= 20) {
+                    statBadge.style.background = 'rgba(255, 193, 7, 0.2)';
+                    statBadge.style.borderColor = 'rgba(255, 193, 7, 0.4)';
+                    statBadge.style.color = '#ffc107';
+                } else {
+                    statBadge.style.background = 'rgba(102, 126, 234, 0.15)';
+                    statBadge.style.borderColor = 'rgba(102, 126, 234, 0.3)';
+                    statBadge.style.color = '#667eea';
+                }
+            }
+        }
+        
+        // Add message
+        function addMessage(role, content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Show ad every 7 messages (after user is engaged)
+            if (messageCount > 0 && messageCount % 7 === 0 && messageCount >= 14) {
+                setTimeout(() => {
+                    showBeautifulAd();
+                }, 1000);
+            }
+        }
+        
+        // Show beautiful ad
+        function showBeautifulAd() {
+            const messagesDiv = document.getElementById('messages');
+            const adDiv = document.createElement('div');
+            adDiv.className = 'ad-container';
+            adDiv.innerHTML = `
+                <div class="ad-label">Sponsored</div>
+                <div class="ad-content">
+                    <!-- Google AdSense code goes here -->
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-format="fluid"
+                         data-ad-layout-key="-6t+ed+2i-1n-4w"
+                         data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+                         data-ad-slot="YOUR_AD_SLOT"></ins>
+                    <script>
+                         (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                    
+                    <!-- Placeholder while waiting for AdSense approval -->
+                    <div class="ad-placeholder">
+                        <h3>💎 Premium Coming Soon!</h3>
+                        <p>Unlimited messages • No ads • Better AI quality<br>
+                        Join the waitlist for 50% off launch price</p>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(adDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Show premium teaser
+        function showPremiumTeaser() {
+            const messagesDiv = document.getElementById('messages');
+            const teaserDiv = document.createElement('div');
+            teaserDiv.className = 'premium-teaser';
+            teaserDiv.innerHTML = `
+                <h3>💎 Premium Version Launching Soon!</h3>
+                <p>Get unlimited messages, better AI quality, and zero ads</p>
+                <button class="waitlist-btn" onclick="joinWaitlist()">Join Waitlist (50% Off)</button>
+            `;
+            messagesDiv.appendChild(teaserDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Join waitlist
+        function joinWaitlist() {
+            const email = prompt('Enter your email to get 50% off at launch:');
+            if (email && email.includes('@')) {
+                // Store in localStorage for now (replace with real backend later)
+                let waitlist = JSON.parse(localStorage.getItem('waitlist') || '[]');
+                waitlist.push({email, date: new Date().toISOString()});
+                localStorage.setItem('waitlist', JSON.stringify(waitlist));
+                
+                addMessage('system', '🎉 You\'re on the list! You\'ll get 50% off when we launch premium.');
+            }
+        }
+        
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Check message limit for free users
+            if (!isPremium && messageCount >= FREE_DAILY_LIMIT) {
+                addMessage('system', `⚠️ You've reached your daily limit of ${FREE_DAILY_LIMIT} messages. Upgrade to Premium for unlimited access!`);
+                setTimeout(() => {
+                    showPremiumUpgradePrompt();
+                }, 1000);
+                return;
+            }
+            
+            addMessage('user', message);
+            input.value = '';
+            sendBtn.disabled = true;
+            sendBtn.textContent = '...';
+            
+            conversationHistory.push({
+                role: 'user',
+                content: message
+            });
+            
+            messageCount++;
+            localStorage.setItem('messageCount', messageCount);
+            updateMessageLimit();
+            
+            try {
+                await runAgentLoop();
+            } catch (error) {
+                addMessage('system', `Error: ${error.message}`);
+            }
+            
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send';
+        }
+        
+        // Show premium upgrade prompt
+        function showPremiumUpgradePrompt() {
+            const messagesDiv = document.getElementById('messages');
+            const upgradeDiv = document.createElement('div');
+            upgradeDiv.className = 'premium-teaser';
+            upgradeDiv.innerHTML = `
+                <h3>💎 Daily Limit Reached!</h3>
+                <p>You've used all ${FREE_DAILY_LIMIT} free messages today.<br>
+                Upgrade to Premium for unlimited messages!</p>
+                <button class="waitlist-btn" onclick="joinWaitlist()">Join Premium Waitlist</button>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Resets tomorrow at midnight
+                </p>
+            `;
+            messagesDiv.appendChild(upgradeDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Agent loop with Groq
+        async function runAgentLoop() {
+            let continueLoop = true;
+            
+            while (continueLoop) {
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.1-70b-versatile',
+                        messages: conversationHistory,
+                        tools: tools,
+                        tool_choice: 'auto',
+                        temperature: 0.7,
+                        max_tokens: 1024
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API Error: ${errorData.error?.message || response.status}`);
+                }
+                
+                const data = await response.json();
+                const choice = data.choices[0];
+                const message = choice.message;
+                
+                // Check if AI wants to use a tool
+                if (message.tool_calls && message.tool_calls.length > 0) {
+                    const toolCall = message.tool_calls[0];
+                    const toolName = toolCall.function.name;
+                    const toolArgs = JSON.parse(toolCall.function.arguments);
+                    
+                    addMessage('system', `🔧 Using ${toolName}...`);
+                    
+                    const toolResult = executeTool(toolName, toolArgs);
+                    
+                    // Add assistant's message with tool call
+                    conversationHistory.push(message);
+                    
+                    // Add tool result
+                    conversationHistory.push({
+                        role: 'tool',
+                        tool_call_id: toolCall.id,
+                        content: toolResult
+                    });
+                } else {
+                    // Final text response
+                    const textContent = message.content;
+                    if (textContent) {
+                        addMessage('assistant', textContent);
+                        conversationHistory.push({
+                            role: 'assistant',
+                            content: textContent
+                        });
+                    }
+                    continueLoop = false;
+                }
+            }
+        }
+        
+        // Share app
+        function shareApp() {
+            const url = window.location.href;
+            const text = '🚀 Check out Abdou AI Agent! Fast, smart, and runs on your phone.';
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Abdou AI Agent',
+                    text: text,
+                    url: url
+                });
+            } else {
+                const shareText = `${text}\n\n${url}`;
+                navigator.clipboard.writeText(shareText);
+                addMessage('system', '📋 Share link copied to clipboard!');
+            }
+        }
+        
+        // Initialize
+        window.onload = function() {
+            const savedKey = localStorage.getItem('groq_api_key');
+            if (savedKey) {
+                apiKey = savedKey;
+                document.getElementById('setupScreen').classList.add('hidden');
+                document.getElementById('chatContainer').style.display = 'flex';
+                loadUserData();
+                addMessage('system', '👋 Welcome back! Ready to help.');
+            }
+        };
+    </script>
+</body>
+</html>
